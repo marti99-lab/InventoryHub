@@ -1,0 +1,59 @@
+@page "/fetchproducts"
+
+<h3>Product List</h3>
+
+@if (products == null)
+{
+    <p>Loading...</p>
+}
+else if (products.Length == 0)
+{
+    <p>No products available.</p>
+}
+else
+{
+    <ul>
+        @foreach (var product in products)
+        {
+            <li>@product.Name - $@product.Price</li>
+        }
+    </ul>
+}
+
+@code {
+    private Product[]? products;
+    [Inject] HttpClient Http { get; set; } = default!;
+
+protected override async Task OnInitializedAsync()
+{
+    try
+    {
+        var response = await Http.GetAsync("http://localhost:5196/api/products"); // ✅ Ensure correct API URL
+        response.EnsureSuccessStatusCode();
+        var json = await response.Content.ReadAsStringAsync();
+        products = System.Text.Json.JsonSerializer.Deserialize<Product[]>(json, 
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error fetching products: {ex.Message}");
+    }
+}
+
+
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty; // ✅ Fix
+        public double Price { get; set; }
+        public int Stock { get; set; }
+        public Category Category { get; set; } = new Category(); // ✅ Fix
+    }
+
+    public class Category
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty; // ✅ Fix
+    }
+
+}
